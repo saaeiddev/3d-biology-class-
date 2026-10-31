@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 
 // These models are original, schematic geometry: organelle sizes and placement are illustrative.
 export function makeScene(container, onSelect, options = {}) {
@@ -34,7 +35,9 @@ export function makeScene(container, onSelect, options = {}) {
   const rim = new THREE.DirectionalLight(0xffffff, 1.3); rim.position.set(0, -5, 4); scene.add(rim);
   const group = new THREE.Group(); scene.add(group);
   let targets = [], motion = !matchMedia('(prefers-reduced-motion: reduce)').matches, kind = 'animal';
-  let selected = null, isolated = false, pulse = null, pulsePath = null, tickTime = 0;
+  let selected = null, isolated = false, pulse = null, pulsePath = null, tickTime = 0, revision = 0, qualityModel = false;
+  const modelPaths = {animal:'animal.glb.gz', plant:'plant.glb.gz', bacteria:'bacteria.glb.gz', neuron:'neuron.glb.gz'};
+  const report = options.onStatus || (()=>{});
   const home = new THREE.Vector3(0, 1.6, 12.6), temp = new THREE.Vector3();
   const materials = (color, opts={}) => new THREE.MeshPhysicalMaterial({ color, roughness: .34, metalness: .02, clearcoat: .32, clearcoatRoughness: .27, ...opts });
   function add(geometry, color, name, position=[0,0,0], scale=[1,1,1], opts={}) {
@@ -146,19 +149,46 @@ export function makeScene(container, onSelect, options = {}) {
     for(let i=0;i<30;i++){let y=(i-14.5)*.19,a=i*.46,p=[Math.cos(a)*1.15,y,Math.sin(a)*1.15],q=[-p[0],y,-p[2]];strandA.push(p);strandB.push(q);ball(null,0x19ab7e,p,[.12,.12,.12]);ball(null,0x46b5d2,q,[.12,.12,.12]);segment(null,i%2?0xe5a84b:0xd8798e,p,q,.045);}
     path(null,0x0b9872,strandA,.075);path(null,0x299dbb,strandB,.075);
   }
-  function clear(){while(group.children.length){const c=group.children.pop();c.geometry?.dispose();c.material?.dispose()} targets=[];pulse=null;pulsePath=null;selected=null;isolated=false;group.rotation.set(0,0,0)}
+  function clear(){++revision;while(group.children.length){const c=group.children[0];group.remove(c);c.traverse(o=>{o.geometry?.dispose();if(o.material){for(const mat of Array.isArray(o.material)?o.material:[o.material]){for(const key of ['map','normalMap','roughnessMap','metalnessMap','emissiveMap','aoMap'])mat[key]?.dispose();mat.dispose()}}})} targets=[];pulse=null;pulsePath=null;selected=null;isolated=false;qualityModel=false;group.rotation.set(0,0,0)}
   function reset(){camera.position.copy(home);controls.target.set(0,0,0);controls.update()}
-  function show(type){clear();kind=type;reset();if(type==='dna')dna();else if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else animal(type==='fungi');}
+  function show(type, mode='quality'){
+    clear(); kind=type; home.set(0,1.6,12.6); reset();
+    const modelName = modelPaths[type];
+    if (modelName && mode==='quality' && (!options.rendererFactory || options.testAssetLoading)){
+      qualityModel=true; const token=revision;
+      if(type==='neuron'||type==='plant'){home.set(0,8.5,10.8);reset()}
+      report('loading');
+      const failed=()=>{if(token!==revision)return;qualityModel=false;report('error');if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else animal(false)};
+      fetch(`${import.meta.env?.BASE_URL || '/'}models/${modelName}`).then(response=>{
+        if(!response.ok)throw new Error('Model download failed');return response.arrayBuffer();
+      }).then(async buffer=>{
+        const bytes=new Uint8Array(buffer);
+        if(bytes[0]===0x1f && bytes[1]===0x8b){
+          if(typeof DecompressionStream==='undefined')throw new Error('Gzip decompression is not supported');
+          buffer=await new Response(new Blob([buffer]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+        }
+        if(token!==revision)return;
+        new GLTFLoader().parse(buffer,'',gltf=>{
+          if(token!==revision){gltf.scene.traverse(o=>{o.geometry?.dispose();o.material?.dispose()});return}
+          const object=gltf.scene;const box=new THREE.Box3().setFromObject(object);const size=box.getSize(new THREE.Vector3());const center=box.getCenter(new THREE.Vector3());
+          const scale=5.6/Math.max(size.x,size.y,size.z);object.scale.setScalar(scale);object.position.copy(center).multiplyScalar(-scale);
+          object.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false}});group.add(object);report('ready');
+        },failed);
+      }).catch(failed);
+      return;
+    }
+    report('schematic');if(type==='dna')dna();else if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else animal(type==='fungi');
+  }
   function select(name){
-    selected=name;group.rotation.y=0;
+    if(qualityModel)return;selected=name;group.rotation.y=0;
     targets.forEach(o=>{o.material.emissive?.setHex(o.userData.name===name?0x364327:0);o.visible=!isolated||o.userData.name===name});
     const first=targets.find(o=>o.userData.name===name);if(first){first.updateWorldMatrix(true,false);first.geometry.computeBoundingSphere();temp.copy(first.geometry.boundingSphere.center);first.localToWorld(temp);controls.target.copy(temp);const direction=camera.position.clone().sub(controls.target).normalize();camera.position.copy(controls.target).addScaledVector(direction,Math.max(5,Math.min(8,camera.position.distanceTo(controls.target))));controls.update()}
   }
-  function setIsolated(value){isolated=value;targets.forEach(o=>{o.visible=!isolated||o.userData.name===selected});if(pulse)pulse.visible=!isolated}
+  function setIsolated(value){if(qualityModel)return;isolated=value;targets.forEach(o=>{o.visible=!isolated||o.userData.name===selected});if(pulse)pulse.visible=!isolated}
   const ray=new THREE.Raycaster(),pointer=new THREE.Vector2();let down;
   renderer.domElement.addEventListener('pointerdown',e=>down=[e.clientX,e.clientY]);
   renderer.domElement.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;let r=renderer.domElement.getBoundingClientRect();pointer.set((e.clientX-r.left)/r.width*2-1,-((e.clientY-r.top)/r.height)*2+1);ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects(targets).find(x=>x.object.visible&&x.object.material.opacity>=.5);if(hit)onSelect(hit.object.userData.name)});
   const resize=new ResizeObserver(()=>{if(!container.clientWidth||!container.clientHeight)return;camera.aspect=container.clientWidth/container.clientHeight;camera.updateProjectionMatrix();renderer.setSize(container.clientWidth,container.clientHeight)});resize.observe(container);
-  let frame;const clock=new THREE.Clock();function tick(){frame=requestAnimationFrame(tick);const delta=Math.min(clock.getDelta(),.05);if(motion){tickTime+=delta;if(!selected&&kind!=='neuron')group.rotation.y+=delta*.12;if(pulse&&pulsePath){pulse.position.copy(pulsePath.getPoint((tickTime*.16)%1));pulse.position.z+=.17;}}controls.update();renderer.render(scene,camera)}tick();show('animal');
+  let frame;const clock=new THREE.Clock();function tick(){frame=requestAnimationFrame(tick);const delta=Math.min(clock.getDelta(),.05);if(motion){tickTime+=delta;if(!selected&&kind!=='neuron')group.rotation.y+=delta*.12;if(pulse&&pulsePath){pulse.position.copy(pulsePath.getPoint((tickTime*.16)%1));pulse.position.z+=.17;}}controls.update();renderer.render(scene,camera)}tick();if(options.initial!==false)show('animal');
   return {supported:true,show,select,reset(){selected=null;setIsolated(false);targets.forEach(o=>o.material.emissive?.setHex(0));reset()},setMotion(v){motion=v},setIsolated,dispose(){cancelAnimationFrame(frame);resize.disconnect();controls.dispose();clear();renderer.dispose();renderer.domElement.remove()}};
 }
