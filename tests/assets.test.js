@@ -8,12 +8,12 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 // Decode all local models with the production loader; image decoding and rasterization are not exercised here.
 globalThis.self=globalThis;
 globalThis.createImageBitmap=async ()=>({width:1,height:1,close(){}});
-for(const name of ['animal','plant','bacteria','neuron','blood-cells','retina-cajal','purkinje-cajal']) test(`${name} asset is a self-contained, nonempty GLB`,async()=>{
+for(const name of ['animal','plant','bacteria','neuron','blood-cells','retina-cajal','purkinje-cajal','eyewire-retinal-neuron']) test(`${name} asset is a self-contained, nonempty GLB`,async()=>{
   const data=gunzipSync(readFileSync(`public/models/${name}.glb.gz`));
   assert.equal(data.toString('ascii',0,4),'glTF');assert.equal(data.readUInt32LE(4),2);assert.equal(data.readUInt32LE(8),data.length);
   const model=await new Promise((resolve,reject)=>new GLTFLoader().parse(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength),'',resolve,reject));
   let triangles=0;model.scene.traverse(o=>{if(o.isMesh)triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3});
-  assert.ok(triangles>100000,`Expected detailed geometry; received ${triangles} triangles`);
+  assert.ok(triangles>(name==='eyewire-retinal-neuron'?30000:100000),`Expected detailed geometry; received ${triangles} triangles`);
   const size=new Box3().setFromObject(model.scene).getSize(new Vector3());assert.ok(size.length()>0);
 });
 

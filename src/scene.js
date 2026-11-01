@@ -36,7 +36,7 @@ export function makeScene(container, onSelect, options = {}) {
   const group = new THREE.Group(); scene.add(group);
   let targets = [], motion = !matchMedia('(prefers-reduced-motion: reduce)').matches, kind = 'animal';
   let selected = null, isolated = false, pulse = null, pulsePath = null, tickTime = 0, revision = 0, qualityModel = false;
-  const modelPaths = {retina:'retina-cajal.glb.gz',purkinje:'purkinje-cajal.glb.gz',blood:'blood-cells.glb.gz',animal:'animal.glb.gz', plant:'plant.glb.gz', bacteria:'bacteria.glb.gz', neuron:'neuron.glb.gz'};
+  const modelPaths = {retinalNeuron:'eyewire-retinal-neuron.glb.gz',retina:'retina-cajal.glb.gz',purkinje:'purkinje-cajal.glb.gz',blood:'blood-cells.glb.gz',animal:'animal.glb.gz', plant:'plant.glb.gz', bacteria:'bacteria.glb.gz', neuron:'neuron.glb.gz'};
   const report = options.onStatus || (()=>{});
   const home = new THREE.Vector3(0, 1.6, 12.6), temp = new THREE.Vector3();
   const materials = (color, opts={}) => new THREE.MeshPhysicalMaterial({ color, roughness: .34, metalness: .02, clearcoat: .32, clearcoatRoughness: .27, ...opts });
@@ -158,7 +158,7 @@ export function makeScene(container, onSelect, options = {}) {
       qualityModel=true; const token=revision;
       if(type==='neuron'||type==='plant'){home.set(0,8.5,10.8);reset()}
       report('loading');
-      const failed=()=>{if(token!==revision)return;qualityModel=false;report('error');if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else if(!['blood','retina','purkinje'].includes(type))animal(false)};
+      const failed=()=>{if(token!==revision)return;qualityModel=false;report('error');if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else if(!['blood','retina','purkinje','retinalNeuron'].includes(type))animal(false)};
       fetch(`${import.meta.env?.BASE_URL || '/'}models/${modelName}`).then(response=>{
         if(!response.ok)throw new Error('Model download failed');return response.arrayBuffer();
       }).then(async buffer=>{
