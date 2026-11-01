@@ -14,7 +14,7 @@ export function makeScene(container, onSelect, options = {}) {
       animal: `<ellipse cx="300" cy="160" rx="200" ry="125" fill="#b8e7c5" stroke="#63b989" stroke-width="7"/><ellipse cx="260" cy="150" rx="68" ry="59" fill="#a989c8"/><circle cx="250" cy="144" r="19" fill="#765391"/><g fill="#e78f6b"><ellipse cx="395" cy="120" rx="34" ry="14"/><ellipse cx="200" cy="224" rx="34" ry="14"/><ellipse cx="383" cy="208" rx="34" ry="14"/></g><g fill="none" stroke="#e9b161" stroke-width="8"><path d="M310 208 Q345 180 380 195"/><path d="M310 220 Q345 192 380 207"/><path d="M310 232 Q345 204 380 219"/></g>`,
       dna: `<g fill="none" stroke-width="8"><path d="M245 30 C420 70 180 120 355 160 S180 250 355 290" stroke="#22a47c"/><path d="M355 30 C180 70 420 120 245 160 S420 250 245 290" stroke="#44b6ca"/></g><g stroke="#e6b65d" stroke-width="5"><path d="M260 55 L340 55 M282 95 L318 95 M280 135 L320 135 M260 185 L340 185 M275 225 L325 225 M285 265 L315 265"/></g>`
     };
-    const fallback = { supported:false, show(type){if(['blood','retina','purkinje','retinalNeuron'].includes(type)){container.innerHTML='<div class="fallback-art"><p>3D model unavailable: this browser does not support WebGL. Structure descriptions remain available.</p></div>';return}const shape=diagrams[type] || diagrams.animal;container.innerHTML=`<div class="fallback-art"><svg viewBox="0 0 650 320" role="img" aria-label="Simplified 2D schematic">${shape}</svg><p>2D schematic · WebGL is unavailable in this browser. Select a structure to read its description.</p></div>`}, select(){}, reset(){}, setMotion(){}, setIsolated(){}, dispose(){container.innerHTML=''} };
+    const fallback = { supported:false, show(type){if(['blood','retina','purkinje','retinalNeuron','rod'].includes(type)){container.innerHTML='<div class="fallback-art"><p>3D model unavailable: this browser does not support WebGL. Structure descriptions remain available.</p></div>';return}const shape=diagrams[type] || diagrams.animal;container.innerHTML=`<div class="fallback-art"><svg viewBox="0 0 650 320" role="img" aria-label="Simplified 2D schematic">${shape}</svg><p>2D schematic · WebGL is unavailable in this browser. Select a structure to read its description.</p></div>`}, select(){}, reset(){}, setMotion(){}, setIsolated(){}, dispose(){container.innerHTML=''} };
     fallback.show('animal'); return fallback;
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
@@ -36,7 +36,7 @@ export function makeScene(container, onSelect, options = {}) {
   const group = new THREE.Group(); scene.add(group);
   let targets = [], motion = !matchMedia('(prefers-reduced-motion: reduce)').matches, kind = 'animal';
   let selected = null, isolated = false, pulse = null, pulsePath = null, tickTime = 0, revision = 0, qualityModel = false;
-  const modelPaths = {retinalNeuron:'eyewire-retinal-neuron.glb.gz',retina:'retina-cajal.glb.gz',purkinje:'purkinje-cajal.glb.gz',blood:'blood-cells.glb.gz',animal:'animal.glb.gz', plant:'plant.glb.gz', bacteria:'bacteria.glb.gz', neuron:'neuron.glb.gz'};
+  const modelPaths = {rod:'rod-cell.glb.gz',retinalNeuron:'eyewire-retinal-neuron.glb.gz',retina:'retina-cajal.glb.gz',purkinje:'purkinje-cajal.glb.gz',blood:'blood-cells.glb.gz',animal:'animal.glb.gz', plant:'plant.glb.gz', bacteria:'bacteria.glb.gz', neuron:'neuron.glb.gz'};
   const report = options.onStatus || (()=>{});
   const home = new THREE.Vector3(0, 1.6, 12.6), temp = new THREE.Vector3();
   const materials = (color, opts={}) => new THREE.MeshPhysicalMaterial({ color, roughness: .34, metalness: .02, clearcoat: .32, clearcoatRoughness: .27, ...opts });
@@ -158,7 +158,7 @@ export function makeScene(container, onSelect, options = {}) {
       qualityModel=true; const token=revision;
       if(type==='neuron'||type==='plant'){home.set(0,8.5,10.8);reset()}
       report('loading');
-      const failed=()=>{if(token!==revision)return;qualityModel=false;report('error');if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else if(!['blood','retina','purkinje','retinalNeuron'].includes(type))animal(false)};
+      const failed=()=>{if(token!==revision)return;qualityModel=false;report('error');if(type==='neuron')neuron();else if(type==='plant')plant();else if(type==='bacteria')bacteria();else if(!['blood','retina','purkinje','retinalNeuron','rod'].includes(type))animal(false)};
       fetch(`${import.meta.env?.BASE_URL || '/'}models/${modelName}`).then(response=>{
         if(!response.ok)throw new Error('Model download failed');return response.arrayBuffer();
       }).then(async buffer=>{

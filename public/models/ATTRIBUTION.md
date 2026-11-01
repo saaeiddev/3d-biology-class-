@@ -15,3 +15,5 @@ Run `gzip -d -k <filename>.glb.gz` to recover the original GLB file. The supplie
 - `purkinje-cajal.glb.gz`: [Cerebellum, NIH 3D 3DPX-000786](https://3d.nih.gov/entries/786), Biovisualization LLC, courtesy of the Cajal Institute, Spanish National Research Council (CSIC), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Unmodified GLB compressed using gzip.
 
 - `eyewire-retinal-neuron.glb.gz`: [Retinal cell 20167 from EyeWire, NIH 3D 3DPX-002682](https://3d.nih.gov/entries/2682), EyeWire, [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). Web-optimized output `20167_100`; compressed with gzip.
+
+- `rod-cell.glb.gz`: [Light-Sensory Cell](https://tactiles.eu/tactiles/lichtsinneszelle/), Barbara Henn / Tactiles, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). A tactile teaching model; the original 3MF was converted to GLB and object colors restored, then compressed with gzip.
