@@ -19,3 +19,5 @@ Run `gzip -d -k <filename>.glb.gz` to recover the original GLB file. The supplie
 - `rod-cell.glb.gz`: [Light-Sensory Cell](https://tactiles.eu/tactiles/lichtsinneszelle/), Barbara Henn / Tactiles, [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). A tactile teaching model; the original 3MF was converted to GLB and object colors restored, then compressed with gzip.
 
 - `microscope.glb`: [Binocular Compound Microscope](https://3d.nih.gov/entries/22786), NIH 3D 3DPX-022786, CC0 1.0. Source GLB.
+
+- `chemistry-set.glb`: [Chemistry Set](https://polyhaven.com/a/chemistry_set), Poly Haven, CC0 1.0. The original 1K glTF and texture files were packed into a GLB.

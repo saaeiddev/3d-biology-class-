@@ -34,3 +34,17 @@ test('production loader decompresses and installs the local neuron model',async(
   const group=world.children.find(c=>c.type==='Group');let meshes=0;group.traverse(o=>{if(o.isMesh)meshes++});assert.ok(meshes>0);
   view.dispose();globalThis.fetch=oldFetch;
 });
+
+test('laboratory microscope is a valid detailed self-contained GLB', async()=>{
+ const data=readFileSync('public/models/microscope.glb');
+ assert.equal(data.toString('ascii',0,4),'glTF');assert.equal(data.readUInt32LE(8),data.length);
+ const model=await new Promise((resolve,reject)=>new GLTFLoader().parse(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength),'',resolve,reject));
+ let triangles=0;model.scene.traverse(o=>{if(o.isMesh)triangles+=(o.geometry.index?.count??o.geometry.attributes.position.count)/3});
+ assert.ok(triangles>100000);assert.ok(new Box3().setFromObject(model.scene).getSize(new Vector3()).length()>0);
+});
+
+test('laboratory chemistry set loads as a self-contained GLB',async()=>{
+ const data=readFileSync('public/models/chemistry-set.glb');assert.equal(data.toString('ascii',0,4),'glTF');assert.equal(data.readUInt32LE(8),data.length);
+ const model=await new Promise((resolve,reject)=>new GLTFLoader().parse(data.buffer.slice(data.byteOffset,data.byteOffset+data.byteLength),'',resolve,reject));
+ let meshes=0;model.scene.traverse(o=>{if(o.isMesh)meshes++});assert.ok(meshes>0);assert.ok(new Box3().setFromObject(model.scene).getSize(new Vector3()).length()>0);
+});
