@@ -17,7 +17,7 @@ test('every specimen constructs finite geometry for its listed structures and is
   const container = {clientWidth:800,clientHeight:500,appendChild(){}};
   const view=makeScene(container,()=>{},{rendererFactory:()=>renderer});
   for(const [key, cell] of Object.entries(cells)){
-    if (key === 'blood') continue; // The blood specimen is a GLB-only model without a schematic.
+    if (['blood','retina','purkinje'].includes(key)) continue; // These specimens are GLB-only models without a schematic.
     view.show(key);
     const group=world.children.find(c=>c.type==='Group');
     const names=new Set(group.children.map(x=>x.userData.name).filter(Boolean));

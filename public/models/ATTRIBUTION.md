@@ -10,3 +10,6 @@ The following files contain the light GLB variants of models created by Grab3D a
 Run `gzip -d -k <filename>.glb.gz` to recover the original GLB file. The supplied models are each one mesh, so structure isolation is provided separately by the application's schematic models.
 
 - `blood-cells.glb.gz`: [Blood Cells](https://grab3d.com/models/anatomy/blood-cells/) by Grab3D, CC0 1.0. Stylized representation.
+
+- `retina-cajal.glb.gz`: [Mammalian retina, NIH 3D 3DPX-018271](https://3d.nih.gov/entries/18271), 3D model by Jeremy Swan after an illustration by Santiago Ramón y Cajal, CC0 1.0 as listed on NIH 3D. Historical educational relief.
+- `purkinje-cajal.glb.gz`: [Cerebellum, NIH 3D 3DPX-000786](https://3d.nih.gov/entries/786), Biovisualization LLC, courtesy of the Cajal Institute, Spanish National Research Council (CSIC), [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Unmodified GLB compressed using gzip.
